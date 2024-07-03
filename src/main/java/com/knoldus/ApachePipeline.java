@@ -1,5 +1,6 @@
 package com.knoldus;
 
+import com.knoldus.Config.Config;
 import org.apache.beam.io.requestresponse.RequestResponseIO;
 import org.apache.beam.io.requestresponse.Result;
 import org.apache.beam.sdk.Pipeline;
@@ -17,8 +18,6 @@ import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.Values;
 import org.apache.beam.sdk.values.PCollection;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
@@ -35,7 +34,6 @@ public class ApachePipeline {
 
         try {
             Config config = Config.load();
-            System.out.println("------------" + "topic:"+ config.getGcpPubSubTopic());
             GcpOptions options = PipelineOptionsFactory.create().as(GcpOptions.class);
             Pipeline pipeline = Pipeline.create(options);
 
@@ -76,7 +74,6 @@ public class ApachePipeline {
             pipeline.run().waitUntilFinish();
 
         } catch (IllegalArgumentException illegalArgumentException) {
-
             System.err.println("Invalid argument: " + illegalArgumentException.getMessage());
         } catch (RuntimeException runtimeException) {
             System.err.println("Runtime error occurred: " + runtimeException.getMessage());

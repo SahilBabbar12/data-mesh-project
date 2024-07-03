@@ -1,4 +1,4 @@
-package com.knoldus;
+package com.knoldus.Config;
 
 import io.github.cdimascio.dotenv.Dotenv;
 
@@ -36,7 +36,7 @@ public class Config {
     }
 
     /**
-     * Factory method to create and load a Config instance from environment variables.
+     * method to create and load a Config instance from environment variables.
      *
      * @return A new Config instance with values loaded from environment variables
      */
