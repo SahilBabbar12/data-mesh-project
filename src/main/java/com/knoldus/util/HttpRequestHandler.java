@@ -1,4 +1,4 @@
-package com.knoldus;
+package com.knoldus.util;
 
 import org.apache.beam.io.requestresponse.Caller;
 import java.io.IOException;
@@ -11,12 +11,12 @@ import java.time.Duration;
 /**
  * Implements Caller interface to make HTTP requests to Mockaroo API.
  */
-class MockarooCaller implements Caller<String, String>, Serializable {
+public class HttpRequestHandler implements Caller<String, String>, Serializable {
 
     private transient HttpClient httpClient;
 
     /** Initializes the MockarooCaller with a new HttpClient. */
-    public MockarooCaller() {
+    public HttpRequestHandler() {
         initHttpClient();
     }
 
@@ -38,20 +38,16 @@ class MockarooCaller implements Caller<String, String>, Serializable {
         if (httpClient == null) {
             initHttpClient();
         }
-
         HttpRequest httpRequest = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("Accept", "application/json")
                 .GET()
                 .build();
-
         try {
             HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-
             if (response.statusCode() != 200) {
                 throw new RuntimeException("API request failed with status code: " + response.statusCode());
             }
-
             return response.body();
         } catch (IOException | InterruptedException exception) {
             throw new RuntimeException("Error calling API: " + exception.getMessage(), exception);
@@ -66,3 +62,4 @@ class MockarooCaller implements Caller<String, String>, Serializable {
         initHttpClient();
     }
 }
+ 

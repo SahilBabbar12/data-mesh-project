@@ -1,6 +1,9 @@
 package com.knoldus;
 
-import com.knoldus.Config.Config;
+import com.knoldus.config.Config;
+import com.knoldus.model.Failure;
+import com.knoldus.pubsub.CreatePubsubMessagesFn;
+import com.knoldus.util.HttpRequestHandler;
 import org.apache.beam.io.requestresponse.RequestResponseIO;
 import org.apache.beam.io.requestresponse.Result;
 import org.apache.beam.sdk.Pipeline;
@@ -14,22 +17,20 @@ import org.apache.beam.sdk.io.gcp.pubsub.PubsubIO;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.transforms.Create;
-import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.Values;
 import org.apache.beam.sdk.values.PCollection;
-
-import java.nio.charset.StandardCharsets;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import org.apache.beam.sdk.values.PCollectionTuple;
+import org.apache.beam.sdk.values.TupleTagList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * ApachePipeline is the main class for executing an Apache Beam pipeline that fetches data from Mockaroo API
  * and writes it to Google Cloud Storage.
  */
-public class ApachePipeline {
-
+public class DataIngestionPipeline {
+    private static final Logger LOG = LoggerFactory.getLogger(DataIngestionPipeline.class);
     public static void main(String[] args) {
 
         try {
@@ -42,43 +43,35 @@ public class ApachePipeline {
                     Create.of(config.getMockarooUrl()));
 
             Coder<String> responseCoder = StringUtf8Coder.of();
-            Result<String> result = requests.apply("CallMockarooAPI",
-                    RequestResponseIO.of(new MockarooCaller(), responseCoder));
+            Result<String> result = requests.apply("handleHttpRequest",
+                    RequestResponseIO.of(new HttpRequestHandler(), responseCoder));
             WriteFilesResult<Void> writeResult = result.getResponses().apply("WriteToGCS",
                     FileIO.<String>write()
                             .via(TextIO.sink())
-                            .to("gs://" + config.getGcpBucketName() + "/" + config.getGcpBucketPath())
-                            .withSuffix(".json"));
+                            .to(config.getGcpBucketName())
+                            .withSuffix(config.getGcpfileSuffix()));
             PCollection<String> fileInfo = writeResult.getPerDestinationOutputFilenames()
                     .apply("ExtractFileNames", Values.create());
 
+            CreatePubsubMessagesFn pubsubMessages= new
+                    CreatePubsubMessagesFn();
+            PCollectionTuple tuple = fileInfo.apply("CreatePubsubMessages",
+                    ParDo.of(pubsubMessages).withOutputTags(pubsubMessages.getOutputTag(),
+                            TupleTagList.of(pubsubMessages.getFailuresTag())));
 
-            PCollection<PubsubMessage> fileMessages = fileInfo.apply("CreatePubsubMessages", ParDo.of(new DoFn<String, PubsubMessage>() {
-                @ProcessElement
-                public void processElement(@Element String filePath, OutputReceiver<PubsubMessage> out) {
-                    String timestamp = new Date().toString();
+            PCollection<PubsubMessage> fileMessages= tuple.get(pubsubMessages.getOutputTag());
+            PCollection<Failure> failurePCollection= tuple.get(pubsubMessages.getFailuresTag());
 
-                    // Creating the payload
-                    String payload = String.format(filePath, timestamp);
-
-                    Map<String, String> attributes = new HashMap<>();
-                    attributes.put("filePath", filePath);
-                    attributes.put("timestamp", timestamp);
-
-                    out.output(new PubsubMessage(payload.getBytes(StandardCharsets.UTF_8), attributes));
-                }
-            }));
-
-            // Writing the message to pub/sub
             fileMessages.apply(PubsubIO.writeMessages().to(config.getGcpPubSubTopic()));
+            LOG.error(failurePCollection.toString());
             pipeline.run().waitUntilFinish();
 
         } catch (IllegalArgumentException illegalArgumentException) {
-            System.err.println("Invalid argument: " + illegalArgumentException.getMessage());
+            LOG.error("Invalid argument: " + illegalArgumentException.getMessage());
         } catch (RuntimeException runtimeException) {
-            System.err.println("Runtime error occurred: " + runtimeException.getMessage());
+            LOG.error("Runtime error occurred: " + runtimeException.getMessage());
         } catch (Exception exception) {
-            System.err.println("An unexpected error occurred: " + exception.getMessage());
+            LOG.error("An unexpected error occurred: " + exception.getMessage());
             exception.printStackTrace();
         }
     }
