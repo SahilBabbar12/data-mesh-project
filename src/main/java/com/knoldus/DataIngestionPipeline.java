@@ -2,16 +2,14 @@ package com.knoldus;
 
 import com.knoldus.config.Config;
 import com.knoldus.model.Failure;
-import com.knoldus.pubsub.CreatePubsubMessagesFn;
+import com.knoldus.pubsub.CreatePubsubMessages;
 import com.knoldus.util.HttpRequestHandler;
+import com.knoldus.util.WriteToGcs;
 import org.apache.beam.io.requestresponse.RequestResponseIO;
 import org.apache.beam.io.requestresponse.Result;
 import org.apache.beam.sdk.Pipeline;
-import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions;
-import org.apache.beam.sdk.io.FileIO;
-import org.apache.beam.sdk.io.TextIO;
 import org.apache.beam.sdk.io.WriteFilesResult;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubIO;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage;
@@ -39,22 +37,21 @@ public class DataIngestionPipeline {
             Pipeline pipeline = Pipeline.create(options);
 
             options.setProject(config.getGcpProjectId());
-            PCollection<String> requests = pipeline.apply("CreateRequests",
-                    Create.of(config.getMockarooUrl()));
 
-            Coder<String> responseCoder = StringUtf8Coder.of();
-            Result<String> result = requests.apply("handleHttpRequest",
-                    RequestResponseIO.of(new HttpRequestHandler(), responseCoder));
-            WriteFilesResult<Void> writeResult = result.getResponses().apply("WriteToGCS",
-                    FileIO.<String>write()
-                            .via(TextIO.sink())
-                            .to(config.getGcpBucketName())
-                            .withSuffix(config.getGcpfileSuffix()));
+
+            Result<String> results = pipeline.apply("CreateRequests",
+                    Create.of(config.getMockarooUrl()))
+                    .apply("handleHttpRequest",
+                    RequestResponseIO.of(new HttpRequestHandler(), StringUtf8Coder.of()));
+
+            WriteFilesResult<Void> writeResult = results.getResponses().apply("WriteToGCS",
+                   WriteToGcs.writeToGCSbucket());
+
             PCollection<String> fileInfo = writeResult.getPerDestinationOutputFilenames()
                     .apply("ExtractFileNames", Values.create());
 
-            CreatePubsubMessagesFn pubsubMessages= new
-                    CreatePubsubMessagesFn();
+            CreatePubsubMessages pubsubMessages= new
+                    CreatePubsubMessages();
             PCollectionTuple tuple = fileInfo.apply("CreatePubsubMessages",
                     ParDo.of(pubsubMessages).withOutputTags(pubsubMessages.getOutputTag(),
                             TupleTagList.of(pubsubMessages.getFailuresTag())));
@@ -63,9 +60,9 @@ public class DataIngestionPipeline {
             PCollection<Failure> failurePCollection= tuple.get(pubsubMessages.getFailuresTag());
 
             fileMessages.apply(PubsubIO.writeMessages().to(config.getGcpPubSubTopic()));
+
             LOG.error(failurePCollection.toString());
             pipeline.run().waitUntilFinish();
-
         } catch (IllegalArgumentException illegalArgumentException) {
             LOG.error("Invalid argument: " + illegalArgumentException.getMessage());
         } catch (RuntimeException runtimeException) {

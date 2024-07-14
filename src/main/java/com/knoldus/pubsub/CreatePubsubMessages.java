@@ -10,7 +10,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CreatePubsubMessagesFn extends DoFn<String, PubsubMessage> {
+public class CreatePubsubMessages extends DoFn<String, PubsubMessage> {
 
     public static final TupleTag<PubsubMessage> SUCCESS_TAG = new TupleTag<PubsubMessage>(){};
     public static final TupleTag<Failure> FAILURE_TAG = new TupleTag<Failure>(){};
@@ -27,7 +27,7 @@ public class CreatePubsubMessagesFn extends DoFn<String, PubsubMessage> {
             out.get(SUCCESS_TAG).output(message);
         } catch (Exception exception) {
             final Failure failure = Failure.from(filePath,
-                    "Unexpected error while creating PubsubMessage" , exception);
+                    "Unexpected error while creating pubsubMessage" , exception);
             out.get(FAILURE_TAG).output(failure);
         }
     }

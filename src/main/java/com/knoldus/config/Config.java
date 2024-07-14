@@ -9,14 +9,12 @@ import io.github.cdimascio.dotenv.Dotenv;
 public class Config {
     private static final String GCP_PROJECT_KEY = "GCP_PROJECT";
     private static final String GCP_BUCKET_NAME_KEY = "GCP_BUCKET_NAME";
-    private static final String GCP_BUCKET_PATH_KEY = "GCP_BUCKET_PATH";
     private static final String GCP_PUB_SUB_TOPIC_KEY = "GCP_PUB_SUB_TOPIC";
     private static final String MOCKAROO_API_URL_KEY = "MOCKAROO_API_URL";
     private static final String GCP_FILE_SUFFIX_KEY="GCP_FILE_SUFFIX";
 
     private final String gcpProjectId;
     private final String gcpBucketName;
-    private final String gcpBucketPath;
     private final String gcpPubSubTopic;
     private final String mockarooUrl;
     private final String gcpfileSuffix;
@@ -27,14 +25,12 @@ public class Config {
      *
      * @param gcpProjectId  The Google Cloud Project ID
      * @param gcpBucketName The Google Cloud Storage bucket name
-     * @param gcpBucketPath The Google Cloud Storage bucket path
      * @param mockarooUrl   The Mockaroo API URL
      * @param gcpfileSuffix
      */
-    private Config(String gcpProjectId, String gcpBucketName, String gcpBucketPath, String gcpPubSubTopic, String mockarooUrl, String gcpfileSuffix) {
+    private Config(String gcpProjectId, String gcpBucketName, String gcpPubSubTopic, String mockarooUrl, String gcpfileSuffix) {
         this.gcpProjectId = gcpProjectId;
         this.gcpBucketName= gcpBucketName;
-        this.gcpBucketPath = gcpBucketPath;
         this.gcpPubSubTopic = gcpPubSubTopic;
         this.mockarooUrl = mockarooUrl;
         this.gcpfileSuffix = gcpfileSuffix;
@@ -50,7 +46,6 @@ public class Config {
         return new Config(
                 dotenv.get(GCP_PROJECT_KEY),
                 dotenv.get(GCP_BUCKET_NAME_KEY),
-                dotenv.get(GCP_BUCKET_PATH_KEY),
                 dotenv.get(GCP_PUB_SUB_TOPIC_KEY),
                 dotenv.get(MOCKAROO_API_URL_KEY),
                 dotenv.get(GCP_FILE_SUFFIX_KEY)
@@ -76,14 +71,10 @@ public class Config {
     }
 
     /**
-     * Gets the Google Cloud Storage bucket path.
+     * Gets pubsub topic path
      *
-     * @return The Google Cloud Storage bucket path
+     * @return pubsub topic path
      */
-    public String getGcpBucketPath() {
-        return gcpBucketPath;
-    }
-
     public String getGcpPubSubTopic() {
         return gcpPubSubTopic;
     }
@@ -97,6 +88,11 @@ public class Config {
         return mockarooUrl;
     }
 
+    /**
+     * Gets the file suffix
+     *
+     * @return the file suffix
+     */
     public String getGcpfileSuffix() {
         return gcpfileSuffix;
     }
