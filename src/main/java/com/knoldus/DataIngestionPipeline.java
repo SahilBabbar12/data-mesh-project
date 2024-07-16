@@ -44,7 +44,7 @@ public class DataIngestionPipeline {
                     .apply("handleHttpRequest",
                     RequestResponseIO.of(new HttpRequestHandler(), StringUtf8Coder.of()));
 
-            WriteFilesResult<Void> writeResult = results.getResponses().apply("WriteToGCS",
+            WriteFilesResult<String> writeResult = results.getResponses().apply("WriteToGCS",
                    WriteToGcs.writeToGCSbucket());
 
             PCollection<String> fileInfo = writeResult.getPerDestinationOutputFilenames()

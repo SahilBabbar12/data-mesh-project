@@ -12,12 +12,15 @@ public class Config {
     private static final String GCP_PUB_SUB_TOPIC_KEY = "GCP_PUB_SUB_TOPIC";
     private static final String MOCKAROO_API_URL_KEY = "MOCKAROO_API_URL";
     private static final String GCP_FILE_SUFFIX_KEY="GCP_FILE_SUFFIX";
+    private static final String GCP_FILE_PREFIX_KEY="GCP_FILE_PREFIX";
+
 
     private final String gcpProjectId;
     private final String gcpBucketName;
     private final String gcpPubSubTopic;
     private final String mockarooUrl;
     private final String gcpfileSuffix;
+    private final String gcpfilePrefix;
 
 
     /**
@@ -27,13 +30,15 @@ public class Config {
      * @param gcpBucketName The Google Cloud Storage bucket name
      * @param mockarooUrl   The Mockaroo API URL
      * @param gcpfileSuffix
+     * @param gcpfilePrefix
      */
-    private Config(String gcpProjectId, String gcpBucketName, String gcpPubSubTopic, String mockarooUrl, String gcpfileSuffix) {
+    private Config(String gcpProjectId, String gcpBucketName, String gcpPubSubTopic, String mockarooUrl, String gcpfileSuffix, String gcpfilePrefix) {
         this.gcpProjectId = gcpProjectId;
         this.gcpBucketName= gcpBucketName;
         this.gcpPubSubTopic = gcpPubSubTopic;
         this.mockarooUrl = mockarooUrl;
         this.gcpfileSuffix = gcpfileSuffix;
+        this.gcpfilePrefix = gcpfilePrefix;
     }
 
     /**
@@ -48,8 +53,9 @@ public class Config {
                 dotenv.get(GCP_BUCKET_NAME_KEY),
                 dotenv.get(GCP_PUB_SUB_TOPIC_KEY),
                 dotenv.get(MOCKAROO_API_URL_KEY),
-                dotenv.get(GCP_FILE_SUFFIX_KEY)
-        );
+                dotenv.get(GCP_FILE_SUFFIX_KEY),
+                dotenv.get(GCP_FILE_PREFIX_KEY)
+                );
     }
 
     /**
@@ -95,5 +101,14 @@ public class Config {
      */
     public String getGcpfileSuffix() {
         return gcpfileSuffix;
+    }
+
+    /**
+     * Gets the file prefix
+     *
+     * @return the file prefix
+     */
+    public String getGcpfilePrefix() {
+        return gcpfilePrefix;
     }
 }
