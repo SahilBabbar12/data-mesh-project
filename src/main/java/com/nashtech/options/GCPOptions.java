@@ -14,35 +14,35 @@ public interface GCPOptions extends PipelineOptions {
 
     @Description("GCP project to access")
     @Validation.Required
-    @Default.String("alert-basis-421507")
+    @Default.String("")
     String getGcpProject();
 
     void setGcpProject(String gcpProject);
 
     @Description("The Cloud Pub/Sub topic to read from")
     @Validation.Required
-    @Default.String("projects/alert-basis-421507/topics/resume-parser-ingestion-topic")
+    @Default.String("projects//topics/")
     String getInputTopic();
 
     void setInputTopic(String inputTopic);
 
     @Description("The cloud Pub/Sub subscription to read from")
     @Validation.Required
-    @Default.String("projects/alert-basis-421507/subscriptions/resume-parser-ingestion-topic-sub")
+    @Default.String("projects//subscriptions/")
     String getInputSubscription();
 
     void setInputSubscription(String inputSubscription);
 
     @Description("The Cloud Pub/Sub topic to write")
     @Validation.Required
-    @Default.String("projects/alert-basis-421507/topics/resume-parser-processor-topic")
+    @Default.String("projects//topics/")
     String getOutputTopic();
 
     void setOutputTopic(String outputTopic);
 
     @Description("The cloud Pub/Sub subscription to write")
     @Validation.Required
-    @Default.String("projects/alert-basis-421507/subscriptions/resume-parser-processor-sub")
+    @Default.String("projects//subscriptions/")
     String getOutputSubscription();
 
     void setOutputSubscription(String outputSubscription);
@@ -62,13 +62,13 @@ public interface GCPOptions extends PipelineOptions {
     void setGcsClient(Storage gcsClient);
 
     @Description("GCS Bucket Name")
-    @Default.String("ingested_resumes")
+    @Default.String("")
     String getGcsBucketName();
 
     void setGcsBucketName(String gcsBucketName);
 
     @Description("GCS File Name")
-    @Default.String("resume-data/resumesData")
+    @Default.String("")
     String getGcsFileName();
 
     void setGcsFileName(String gcsFileName);
